@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#C8102E" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="동화약품" />
+  <title>동화약품(주) 안내</title>
+
+  <!-- 🔧 Backend: 추후 Supabase 연동 예정 -->
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── TOKENS ─── */
+    :root {
+      --red:        #C8102E;
+      --red-dark:   #9B0B22;
+      --red-light:  #F7E0E4;
+      --gold:       #B8963E;
+      --white:      #FAFAFA;
+      --g50:        #F8F8F8;
+      --g100:       #EFEFEF;
+      --g300:       #CCCCCC;
+      --g500:       #888888;
+      --g700:       #444444;
+      --dark:       #1A1A1A;
+      --serif:      'Noto Serif KR', serif;
+      --sans:       'Noto Sans KR', sans-serif;
+      --r14:        14px;
+      --r16:        16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--g50); font-family: var(--sans); color: var(--dark); overscroll-behavior: none; }
+
+    /* ─── APP SHELL ─── */
+    #app {
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+      max-width: 480px; margin: 0 auto;
+      background: var(--white);
+      box-shadow: 0 0 60px rgba(0,0,0,0.08);
+      position: relative; overflow: hidden;
+    }
+
+    /* ─── SCREENS ─── */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
+      transform: translateX(32px);
+      transition: opacity .32s ease, transform .32s ease;
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .screen.active  { opacity: 1; pointer-events: all; transform: translateX(0); }
+    .screen.exiting { opacity: 0; transform: translateX(-24px); transition: opacity .24s, transform .24s; }
+
+    /* ─── TOP BAR ─── */
+    .top-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; background: white;
+      border-bottom: 1px solid var(--g100);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .back-btn {
+      width: 36px; height: 36px; border: none;
+      background: var(--g50); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .top-bar-title { font-family: var(--serif); font-size: 16px; font-weight: 600; }
+    .top-logo { margin-left: auto; width: 28px; height: 28px; background: var(--red); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 700; }
+
+    /* ─── LOADING SPLASH ─── */
+    #splash {
+      position: fixed; inset: 0; background: var(--red);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; transition: opacity .5s;
+    }
+    #splash .s-title  { font-family: var(--serif); color: white; font-size: 36px; font-weight: 700; }
+    #splash .s-sub    { color: rgba(255,255,255,.6); font-size: 11px; letter-spacing: 3px; margin-top: 4px; }
+    #splash .s-bar    { width: 48px; height: 3px; background: rgba(255,255,255,.25); border-radius: 2px; margin-top: 44px; overflow: hidden; }
+    #splash .s-bar::after { content: ''; display: block; width: 40%; height: 100%; background: white; border-radius: 2px; animation: barSlide 1s ease infinite; }
+    @keyframes barSlide { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
+
+    /* ─── COMMON FORM ELEMENTS ─── */
+    .form-body   { padding: 28px 28px 40px; display: flex; flex-direction: column; flex: 1; }
+    .form-icon   { width: 64px; height: 64px; border-radius: 18px; background: var(--red-light); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 22px; }
+    .form-title  { font-family: var(--serif); font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .form-sub    { font-size: 13px; color: var(--g500); line-height: 1.8; margin-bottom: 30px; }
+
+    .lbl         { display: block; font-size: 11px; font-weight: 700; color: var(--g700); letter-spacing: .5px; margin-bottom: 7px; }
+    .inp-wrap    { margin-bottom: 16px; position: relative; }
+    .inp {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--g100); border-radius: 12px;
+      font-size: 16px; font-family: var(--sans); color: var(--dark);
+      background: var(--g50); outline: none;
+      transition: border-color .2s, background .2s;
+    }
+    .inp:focus { border-color: var(--red); background: white; }
+    .inp.error  { border-color: #E53935; background: #fff8f8; }
+    .inp-hint   { font-size: 11px; color: var(--g500); margin-top: 5px; }
+    .inp-hint.ok  { color: #2E7D32; }
+    .inp-hint.err { color: #C62828; }
+
+    /* Domain badge inside input */
+    .inp-domain-wrap { display: flex; align-items: center; border: 1.5px solid var(--g100); border-radius: 12px; background: var(--g50); transition: border-color .2s, background .2s; overflow: hidden; }
+    .inp-domain-wrap:focus-within { border-color: var(--red); background: white; }
+    .inp-domain-wrap .inp { border: none; background: transparent; flex: 1; padding-right: 4px; }
+    .inp-domain-wrap .inp:focus { border: none; background: transparent; }
+    .domain-badge { padding: 0 14px 0 2px; font-size: 13px; color: var(--g500); white-space: nowrap; flex-shrink: 0; }
+
+    /* Code inputs */
+    .code-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .code-inp {
+      flex: 1; padding: 14px 0; text-align: center;
+      border: 1.5px solid var(--g100); border-radius: 12px;
+      font-size: 22px; font-weight: 700; background: var(--g50);
+      outline: none; transition: border-color .2s;
+    }
+    .code-inp:focus { border-color: var(--red); background: white; }
+
+    /* Error / success banner */
+    .alert {
+      padding: 12px 16px; border-radius: 10px; font-size: 13px;
+      margin-bottom: 16px; display: none; line-height: 1.6;
+    }
+    .alert.show  { display: block; }
+    .alert.err   { background: #FFF0F2; border: 1px solid #FFCDD2; color: #B71C1C; }
+    .alert.ok    { background: #F1F8E9; border: 1px solid #C5E1A5; color: #2E7D32; }
+    .alert.info  { background: #E3F2FD; border: 1px solid #BBDEFB; color: #1565C0; }
+
+    /* Buttons */
+    .btn {
+      width: 100%; padding: 16px; border: none; border-radius: 14px;
+      font-size: 15px; font-family: var(--serif); font-weight: 600;
+      cursor: pointer; transition: all .2s; margin-top: 8px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--red); color: white; box-shadow: 0 6px 20px rgba(200,16,46,.28); }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-primary:disabled { background: var(--g300); box-shadow: none; cursor: not-allowed; transform: none; }
+    .btn-ghost { background: var(--g100); color: var(--g700); margin-top: 10px; }
+    .btn-ghost:hover { background: var(--g300); }
+    .btn-outline { background: white; color: var(--red); border: 1.5px solid var(--red); }
+
+    /* Link-style text button */
+    .txt-btn { background: none; border: none; color: var(--red); font-size: 13px; cursor: pointer; text-decoration: underline; font-family: var(--sans); }
+
+    /* Timer badge */
+    .timer-badge {
+      display: inline-block; background: var(--g100); border-radius: 6px;
+      padding: 3px 10px; font-size: 13px; font-weight: 700; color: var(--g700);
+      font-variant-numeric: tabular-nums;
+    }
+    .timer-badge.urgent { background: var(--red-light); color: var(--red); }
+
+    /* ── DIVIDER ── */
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--g100); }
+    .divider span { font-size: 12px; color: var(--g300); white-space: nowrap; }
+
+    /* ══════════════════════════════
+       SCREEN: HOME
+    ══════════════════════════════ */
+    #screen-home { background: linear-gradient(160deg, #fff 0%, #fff 55%, var(--red-light) 100%); }
+    .home-wrap { padding: 52px 28px 20px; }
+    .home-badge { display: inline-block; background: var(--red-light); color: var(--red); font-size: 10px; font-weight: 700; letter-spacing: 2px; padding: 5px 14px; border-radius: 20px; margin-bottom: 18px; }
+    .home-title { font-family: var(--serif); font-size: 28px; font-weight: 700; line-height: 1.35; color: var(--dark); }
+    .home-title span { color: var(--red); }
+    .home-sub { font-size: 13px; color: var(--g500); line-height: 1.8; margin-top: 10px; font-weight: 300; }
+    .home-divider { width: 44px; height: 3px; background: var(--red); border-radius: 2px; margin: 22px 28px; }
+    .home-address {
+      margin: 0 20px 24px; background: white; border-radius: 18px;
+      padding: 20px 20px; box-shadow: 0 6px 32px rgba(200,16,46,.09);
+      border: 1px solid var(--red-light); display: flex; align-items: center; gap: 14px;
+    }
+    .address-icon { font-size: 32px; }
+    .address-name { font-family: var(--serif); font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .address-text { font-size: 12px; color: var(--g500); line-height: 1.6; }
+
+    .home-choices { padding: 0 20px 32px; display: flex; flex-direction: column; gap: 13px; }
+    .choice-lbl { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--g500); text-transform: uppercase; margin-bottom: 4px; padding-left: 2px; }
+    .choice-card {
+      border-radius: 16px; padding: 18px 20px; cursor: pointer;
+      display: flex; align-items: center; gap: 14px;
+      transition: transform .2s, box-shadow .2s; border: none; width: 100%; text-align: left;
+    }
+    .choice-card:active { transform: scale(0.97); }
+    .c-emp { background: var(--red); box-shadow: 0 8px 24px rgba(200,16,46,.28); }
+    .c-vis { background: white; box-shadow: 0 4px 18px rgba(0,0,0,.07); border: 1.5px solid var(--g100) !important; }
+    .c-icon { width: 48px; height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .c-emp .c-icon { background: rgba(255,255,255,.15); }
+    .c-vis .c-icon { background: var(--red-light); }
+    .c-txt { flex: 1; }
+    .c-title { font-family: var(--serif); font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .c-emp .c-title { color: white; }
+    .c-vis .c-title { color: var(--dark); }
+    .c-desc { font-size: 12px; }
+    .c-emp .c-desc { color: rgba(255,255,255,.65); }
+    .c-vis .c-desc { color: var(--g500); }
+    .c-arr { color: rgba(255,255,255,.5); font-size: 20px; }
+    .c-vis .c-arr { color: var(--g300); }
+    .home-footer { text-align: center; font-size: 11px; color: var(--g300); padding: 0 20px 32px; }
+
+    /* ══════════════════════════════
+       SCREEN: EMP GATE (로그인 / 회원가입 선택)
+    ══════════════════════════════ */
+    #screen-emp-gate { background: white; }
+    .gate-hero { background: linear-gradient(135deg, var(--dark) 0%, #3A1020 100%); padding: 52px 28px 36px; position: relative; overflow: hidden; }
+    .gate-hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: var(--red); border-radius: 50%; opacity: .15; }
+    .gate-hero-tag { font-size: 10px; color: rgba(255,255,255,.5); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+    .gate-hero-title { font-family: var(--serif); font-size: 26px; font-weight: 700; color: white; line-height: 1.3; position: relative; z-index: 1; }
+    .gate-hero-sub { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 8px; line-height: 1.7; position: relative; z-index: 1; }
+    .gate-body { padding: 32px 24px 40px; display: flex; flex-direction: column; gap: 14px; }
+    .gate-card {
+      border-radius: 18px; padding: 22px 22px; cursor: pointer;
+      display: flex; align-items: center; gap: 16px;
+      border: 1.5px solid var(--g100); background: white;
+      box-shadow: 0 3px 14px rgba(0,0,0,.05); transition: all .2s;
+    }
+    .gate-card:active { transform: scale(0.97); }
+    .gate-card:hover { border-color: var(--red); box-shadow: 0 6px 24px rgba(200,16,46,.12); }
+    .gate-card-icon { width: 52px; height: 52px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .gc-login .gate-card-icon { background: var(--red-light); }
+    .gc-signup .gate-card-icon { background: #EEF4FF; }
+    .gate-card-txt { flex: 1; }
+    .gate-card-title { font-family: var(--serif); font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .gate-card-desc { font-size: 12px; color: var(--g500); line-height: 1.6; }
+    .gate-arr { color: var(--g300); font-size: 18px; }
+
+    /* ══════════════════════════════
+       SCREEN: SIGN UP
+    ══════════════════════════════ */
+    #screen-signup { background: white; }
+
+    /* ══════════════════════════════
+       SCREEN: VERIFY CODE
+    ══════════════════════════════ */
+    #screen-verify { background: white; }
+    .verify-email-display {
+      background: var(--g50); border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; color: var(--dark);
+      font-weight: 600; margin-bottom: 20px; border: 1px solid var(--g100);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ══════════════════════════════
+       SCREEN: SET PASSWORD
+    ══════════════════════════════ */
+    #screen-setpw { background: white; }
+
+    /* ══════════════════════════════
+       SCREEN: LOGIN
+    ══════════════════════════════ */
+    #screen-login { background: white; }
+
+    /* ══════════════════════════════
+       SCREEN: RE-VERIFY (6개월 재인증)
+    ══════════════════════════════ */
+    #screen-reverify { background: white; }
+    .reverify-banner {
+      background: linear-gradient(135deg, #FFF3E0, #FFF8E1);
+      border: 1px solid #FFCC02;
+      border-radius: 16px; padding: 20px;
+      display: flex; gap: 14px; align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .reverify-banner span { font-size: 28px; flex-shrink: 0; }
+    .reverify-banner p { font-size: 13px; color: #5D4037; line-height: 1.7; }
+
+    /* ══════════════════════════════
+       SCREEN: EMPLOYEE DASHBOARD
+    ══════════════════════════════ */
+    #screen-employee { background: var(--g50); }
+    .emp-hero { background: var(--red); padding: 50px 28px 28px; position: relative; overflow: hidden; }
+    .emp-hero::after { content: ''; position: absolute; bottom: -40px; right: -40px; width: 160px; height: 160px; background: rgba(255,255,255,.06); border-radius: 50%; }
+    .emp-welcome { font-size: 13px; color: rgba(255,255,255,.7); margin-bottom: 4px; }
+    .emp-name { font-family: var(--serif); font-size: 24px; font-weight: 700; color: white; margin-bottom: 8px; }
+    .emp-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .emp-tag { display: inline-block; background: rgba(255,255,255,.15); color: white; font-size: 11px; padding: 4px 12px; border-radius: 20px; }
+    .emp-verified-tag { display: inline-block; background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); font-size: 11px; padding: 4px 12px; border-radius: 20px; }
+    .emp-body { padding: 22px 18px; }
+    .sec-lbl { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--g500); text-transform: uppercase; margin-bottom: 13px; padding-left: 2px; }
+    .emp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 26px; }
+    .emp-card { background: white; border-radius: 15px; padding: 16px 14px; box-shadow: 0 2px 10px rgba(0,0,0,.05); cursor: pointer; transition: transform .2s, box-shadow .2s; border: 1px solid transparent; }
+    .emp-card:active { transform: scale(0.96); }
+    .emp-card:hover { box-shadow: 0 5px 18px rgba(0,0,0,.1); border-color: var(--red-light); }
+    .emp-card-icon { font-size: 26px; margin-bottom: 9px; }
+    .emp-card-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
+    .emp-card-desc { font-size: 11px; color: var(--g500); }
+    .notice-list { display: flex; flex-direction: column; gap: 9px; }
+    .notice-item { background: white; border-radius: 13px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,.04); display: flex; gap: 12px; }
+    .n-dot { width: 7px; height: 7px; background: var(--red); border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+    .n-text { font-size: 13px; color: var(--dark); line-height: 1.6; }
+    .n-date { font-size: 11px; color: var(--g300); margin-top: 3px; }
+    .logout-btn { width: 100%; padding: 14px; background: var(--g100); color: var(--g500); border: none; border-radius: 12px; font-size: 14px; font-family: var(--sans); cursor: pointer; margin: 24px 0 16px; transition: background .2s; }
+    .logout-btn:hover { background: var(--g300); color: var(--g700); }
+
+    /* ══════════════════════════════
+       SCREENS: VISITOR INFO
+    ══════════════════════════════ */
+    #screen-visitor { background: white; }
+    .vis-hero { background: linear-gradient(135deg, var(--dark) 0%, #3A1020 100%); padding: 50px 28px 32px; position: relative; overflow: hidden; }
+    .vis-hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: var(--red); border-radius: 50%; opacity: .15; }
+    .vis-hero-tag { font-size: 10px; color: rgba(255,255,255,.5); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+    .vis-hero-title { font-family: var(--serif); font-size: 26px; font-weight: 700; color: white; line-height: 1.3; position: relative; z-index: 1; }
+    .vis-hero-sub { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 6px; line-height: 1.7; position: relative; z-index: 1; }
+    .vis-menu { padding: 22px 18px 40px; display: flex; flex-direction: column; gap: 13px; }
+    .vis-item { background: white; border: 1.5px solid var(--g100); border-radius: 17px; padding: 18px 20px; cursor: pointer; display: flex; align-items: center; gap: 16px; transition: all .2s; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+    .vis-item:active { transform: scale(0.97); }
+    .vis-item:hover { border-color: var(--red); box-shadow: 0 6px 22px rgba(200,16,46,.11); }
+    .vis-icon { width: 52px; height: 52px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .vi-p { background: #EEF4FF; } .vi-v { background: #F0FFF4; } .vi-h { background: var(--red-light); }
+    .vis-txt { flex: 1; }
+    .vis-title { font-family: var(--serif); font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .vis-desc { font-size: 12px; color: var(--g500); }
+    .vis-arr { color: var(--g300); font-size: 18px; }
+
+    /* INFO pages */
+    .info-page { background: white; }
+    .info-hero { padding: 44px 28px 26px; }
+    .info-hero-icon { font-size: 42px; margin-bottom: 13px; }
+    .info-hero-title { font-family: var(--serif); font-size: 24px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+    .info-hero-sub { font-size: 13px; color: var(--g500); line-height: 1.7; }
+    .info-body { padding: 0 20px 48px; }
+    .info-card { background: var(--g50); border-radius: 14px; padding: 18px; margin-bottom: 13px; border-left: 4px solid var(--red); }
+    .info-card-title { font-size: 12px; font-weight: 700; color: var(--red); margin-bottom: 7px; display: flex; align-items: center; gap: 5px; }
+    .info-card-body { font-size: 14px; color: var(--dark); line-height: 1.8; }
+    .step { display: flex; gap: 15px; align-items: flex-start; margin-bottom: 15px; }
+    .step-n { width: 30px; height: 30px; background: var(--red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .step-t { padding-top: 5px; font-size: 14px; color: var(--dark); line-height: 1.7; }
+    .step-t strong { font-weight: 700; }
+    .hl-box { background: var(--red-light); border-radius: 13px; padding: 16px 18px; margin-bottom: 14px; }
+    .hl-box p { font-size: 14px; color: var(--red-dark); line-height: 1.8; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .tag { background: white; border: 1px solid var(--g100); border-radius: 20px; padding: 5px 13px; font-size: 12px; color: var(--g700); }
+    .info-map { background: var(--g100); border-radius: 14px; height: 160px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 7px; margin-bottom: 18px; border: 2px dashed var(--g300); }
+    .info-map span { font-size: 32px; }
+    .info-map p { font-size: 12px; color: var(--g500); }
+
+    /* ══════════════════════════════
+       SCREEN: 임직원 메뉴 (빌딩 1897)
+    ══════════════════════════════ */
+    #screen-emp-menu {
+      background:
+        radial-gradient(circle at 100% 0%, rgba(184,150,62,.06) 0%, transparent 45%),
+        radial-gradient(circle at 0% 100%, rgba(200,16,46,.04) 0%, transparent 50%),
+        linear-gradient(180deg, #FFFFFF 0%, #FBF9F4 100%);
+    }
+    .em-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; background: transparent;
+      position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
+      background: rgba(255,255,255,.65);
+      border-bottom: 1px solid rgba(184,150,62,.12);
+    }
+    .em-back-btn {
+      width: 36px; height: 36px; border: none; background: rgba(255,255,255,.8);
+      border: 1px solid var(--g100);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--dark); transition: all .2s;
+    }
+    .em-back-btn:hover { background: var(--red); color: white; border-color: var(--red); }
+    .em-topbar-mark {
+      font-family: var(--serif); font-size: 13px; font-weight: 600;
+      color: var(--g700); letter-spacing: 1.5px;
+    }
+    .em-topbar-mark span { color: var(--red); font-weight: 700; }
+
+    /* Hero with 빌딩1897 wordmark */
+    .em-hero { padding: 44px 28px 30px; text-align: center; position: relative; }
+    .em-hero::before {
+      content: ''; position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      width: 1px; height: 18px; background: var(--gold);
+    }
+    .em-eyebrow {
+      font-size: 9px; font-weight: 600; letter-spacing: 4px;
+      color: var(--gold); margin: 30px 0 14px; text-transform: uppercase;
+    }
+    .em-wordmark {
+      display: inline-flex; align-items: baseline; justify-content: center;
+      font-family: var(--serif); gap: 8px;
+    }
+    .em-wordmark .w-name {
+      font-size: 22px; font-weight: 300; color: var(--dark);
+      letter-spacing: 4px;
+    }
+    .em-wordmark .w-year {
+      font-size: 44px; font-weight: 700; color: var(--red);
+      letter-spacing: 2px; line-height: 1;
+    }
+    .em-rule {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin: 18px auto 14px;
+    }
+    .em-rule .r-line { width: 28px; height: 1px; background: var(--gold); opacity: .6; }
+    .em-rule .r-dot  { width: 4px; height: 4px; background: var(--gold); border-radius: 50%; }
+    .em-tagline {
+      font-size: 10px; font-weight: 500; letter-spacing: 3.5px;
+      color: var(--g500); margin-bottom: 22px;
+    }
+    .em-title {
+      font-family: var(--serif); font-size: 22px; font-weight: 700;
+      color: var(--dark); margin-bottom: 8px; letter-spacing: -.3px;
+    }
+    .em-sub {
+      font-size: 13px; color: var(--g500); line-height: 1.75; font-weight: 300;
+    }
+
+    /* Menu cards list */
+    .em-menu { padding: 16px 20px 40px; display: flex; flex-direction: column; gap: 12px; }
+    .em-card {
+      position: relative;
+      background: white; border: 1px solid rgba(184,150,62,.18);
+      border-radius: 18px; padding: 20px 22px;
+      display: flex; align-items: center; gap: 16px;
+      cursor: pointer; text-align: left; width: 100%;
+      font-family: var(--sans);
+      box-shadow: 0 2px 14px rgba(26,26,26,.04);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+      overflow: hidden;
+    }
+    .em-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: linear-gradient(180deg, var(--red), var(--gold));
+      opacity: 0; transition: opacity .25s ease;
+    }
+    .em-card:hover {
+      border-color: var(--red);
+      box-shadow: 0 10px 30px rgba(200,16,46,.13);
+      transform: translateY(-2px);
+    }
+    .em-card:hover::before { opacity: 1; }
+    .em-card:active { transform: scale(.98); }
+
+    .em-card-icon {
+      width: 54px; height: 54px; border-radius: 15px;
+      background: linear-gradient(135deg, var(--red-light) 0%, #FFF5F2 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(200,16,46,.08);
+    }
+    .em-card-txt { flex: 1; min-width: 0; }
+    .em-card-title {
+      font-family: var(--serif); font-size: 16px; font-weight: 700;
+      color: var(--dark); margin-bottom: 4px; letter-spacing: -.2px;
+    }
+    .em-card-desc {
+      font-size: 12px; color: var(--g500); line-height: 1.6; font-weight: 400;
+    }
+    .em-card-arr {
+      color: var(--g300); font-size: 24px; font-weight: 300;
+      flex-shrink: 0; transition: transform .25s ease, color .25s ease;
+    }
+    .em-card:hover .em-card-arr { transform: translateX(4px); color: var(--red); }
+
+    /* Footer mark */
+    .em-foot {
+      text-align: center; padding: 8px 20px 32px;
+      font-size: 10px; letter-spacing: 2px; color: var(--g300);
+      font-family: var(--serif);
+    }
+    .em-foot-line {
+      width: 36px; height: 1px; background: var(--g100);
+      margin: 0 auto 12px;
+    }
+
+    /* Slide-in cascade animation */
+    @keyframes pushSlideIn {
+      0%   { opacity: 0; transform: translateX(60px); }
+      60%  { opacity: 1; }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes wmReveal {
+      from { opacity: 0; transform: translateY(8px); letter-spacing: 8px; }
+      to   { opacity: 1; transform: translateY(0); letter-spacing: 4px; }
+    }
+    @keyframes ruleReveal {
+      from { opacity: 0; width: 0; }
+      to   { opacity: .6; width: 28px; }
+    }
+    #screen-emp-menu.active .em-eyebrow { animation: fadeUp .5s ease .1s both; }
+    #screen-emp-menu.active .em-wordmark .w-name  { animation: wmReveal .55s ease .2s both; }
+    #screen-emp-menu.active .em-wordmark .w-year  { animation: wmReveal .55s ease .3s both; }
+    #screen-emp-menu.active .em-rule .r-line { animation: ruleReveal .45s ease .45s both; }
+    #screen-emp-menu.active .em-rule .r-dot  { animation: fadeUp .35s ease .55s both; }
+    #screen-emp-menu.active .em-tagline { animation: fadeUp .45s ease .6s both; }
+    #screen-emp-menu.active .em-title   { animation: fadeUp .45s ease .7s both; }
+    #screen-emp-menu.active .em-sub     { animation: fadeUp .45s ease .8s both; }
+    #screen-emp-menu.active .em-card {
+      opacity: 0;
+      animation: pushSlideIn .55s cubic-bezier(.22, 1, .36, 1) forwards;
+    }
+    #screen-emp-menu.active .em-card.s1 { animation-delay: .9s; }
+    #screen-emp-menu.active .em-card.s2 { animation-delay: 1.0s; }
+    #screen-emp-menu.active .em-card.s3 { animation-delay: 1.1s; }
+    #screen-emp-menu.active .em-card.s4 { animation-delay: 1.2s; }
+    #screen-emp-menu.active .em-foot    { animation: fadeUp .5s ease 1.35s both; }
+
+    /* ─── animations ─── */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .fu  { animation: fadeUp .4s ease forwards; }
+    .fu1 { animation-delay: .08s; opacity: 0; }
+    .fu2 { animation-delay: .16s; opacity: 0; }
+    .fu3 { animation-delay: .24s; opacity: 0; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--g300); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="s-title">동화약품</div>
+  <div class="s-sub">DONGWHA PHARMACEUTICAL</div>
+  <div class="s-bar"></div>
+</div>
+
+<div id="app">
+
+  <!-- ══════════════════════════════
+       ① 홈
+  ══════════════════════════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="home-wrap">
+      <div class="home-badge fu">DONGWHA PHARMACEUTICAL</div>
+      <h1 class="home-title fu fu1">동화약품(주)에<br><span>오신 것을 환영합니다</span></h1>
+      <p class="home-sub fu fu2">임직원 전용 시설 안내 플랫폼<br>아래 메뉴에서 원하는 서비스를 선택해 주세요.</p>
+    </div>
+    <div class="home-divider fu fu2"></div>
+    <div class="home-address fu fu3">
+      <div class="address-icon">🏢</div>
+      <div>
+        <div class="address-name">동화약품 본사</div>
+        <div class="address-text">서울특별시 동대문구<br>천호대로 64 (용두동 2-13)</div>
+      </div>
+    </div>
+    <div class="home-choices">
+      <div class="choice-lbl">서비스 입장</div>
+      <button class="choice-card c-emp" onclick="goTo('screen-emp-menu')">
+        <div class="c-icon">🪪</div>
+        <div class="c-txt">
+          <div class="c-title">임직원 입장</div>
+          <div class="c-desc">VR투어 · 좌석배치도 · 보당홀 시뮬레이션 등</div>
+        </div>
+        <div class="c-arr">›</div>
+      </button>
+    </div>
+    <div class="home-footer">
+      <strong>동화약품(주)</strong> · 대표전화 02-2021-6000<br>
+      ⓒ 2025 Dongwha Pharmaceutical Co., Ltd.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ①-B 임직원 메뉴 (빌딩 1897)
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-emp-menu">
+    <div class="em-topbar">
+      <button class="em-back-btn" onclick="goBack()" aria-label="뒤로">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="em-topbar-mark">DONGWHA <span>1897</span></div>
+      <div style="width:36px;"></div>
+    </div>
+
+    <div class="em-hero">
+      <div class="em-eyebrow">EMPLOYEE ENTRANCE</div>
+      <div class="em-wordmark">
+        <span class="w-name">빌딩</span>
+        <span class="w-year">1897</span>
+      </div>
+      <div class="em-rule">
+        <span class="r-line"></span>
+        <span class="r-dot"></span>
+        <span class="r-line"></span>
+      </div>
+      <p class="em-tagline">SINCE 1897 · DONGWHA HERITAGE</p>
+      <h2 class="em-title">임직원 시설 안내</h2>
+      <p class="em-sub">동화약품 본사 사옥의 시설 정보와 안내를<br>아래 메뉴에서 확인하실 수 있습니다.</p>
+    </div>
+
+    <div class="em-menu">
+      <button class="em-card s1" onclick="alert('사옥 VR투어 (준비 중)')">
+        <div class="em-card-icon">🥽</div>
+        <div class="em-card-txt">
+          <div class="em-card-title">사옥 VR투어</div>
+          <div class="em-card-desc">VR투어를 통한 건물 내 각종 정보 및 사용법 안내</div>
+        </div>
+        <div class="em-card-arr">›</div>
+      </button>
+
+      <button class="em-card s2" onclick="alert('좌석배치도 (준비 중)')">
+        <div class="em-card-icon">🗺️</div>
+        <div class="em-card-txt">
+          <div class="em-card-title">좌석배치도</div>
+          <div class="em-card-desc">층별 부서 및 임직원 위치 조회</div>
+        </div>
+        <div class="em-card-arr">›</div>
+      </button>
+
+      <button class="em-card s3" onclick="alert('3층 보당홀 시뮬레이션 (준비 중)')">
+        <div class="em-card-icon">🎭</div>
+        <div class="em-card-txt">
+          <div class="em-card-title">3층 보당홀 시뮬레이션</div>
+          <div class="em-card-desc">3층 보당홀 행사·강연 대비 시뮬레이션 및 안내</div>
+        </div>
+        <div class="em-card-arr">›</div>
+      </button>
+
+      <button class="em-card s4" onclick="alert('기타 문의사항 QnA (준비 중)')">
+        <div class="em-card-icon">💬</div>
+        <div class="em-card-txt">
+          <div class="em-card-title">기타 문의사항 QnA</div>
+          <div class="em-card-desc">방문자 신청, 필요품목 요청방법, 분리수거, 임직원 얼굴인식 및 사원증 등록방법 등</div>
+        </div>
+        <div class="em-card-arr">›</div>
+      </button>
+    </div>
+
+    <div class="em-foot">
+      <div class="em-foot-line"></div>
+      DONGWHA PHARMACEUTICAL · EST. 1897
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ② 임직원 게이트 (로그인/회원가입 선택)
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-emp-gate">
+    <div class="gate-hero">
+      <div class="gate-hero-tag">Employee Only</div>
+      <h2 class="gate-hero-title">임직원 전용<br>서비스</h2>
+      <p class="gate-hero-sub">동화약품 임직원만 이용 가능합니다.<br>@dong-wha.co.kr 이메일 계정이 필요합니다.</p>
+    </div>
+    <div class="gate-body">
+      <div class="gate-card gc-login" onclick="goTo('screen-login')">
+        <div class="gate-card-icon">🔑</div>
+        <div class="gate-card-txt">
+          <div class="gate-card-title">로그인</div>
+          <div class="gate-card-desc">이미 계정이 있는 경우<br>이메일 + 비밀번호로 로그인</div>
+        </div>
+        <div class="gate-arr">›</div>
+      </div>
+      <div class="gate-card gc-signup" onclick="goTo('screen-signup')">
+        <div class="gate-card-icon">📝</div>
+        <div class="gate-card-txt">
+          <div class="gate-card-title">회원가입</div>
+          <div class="gate-card-desc">최초 이용 시 이메일 인증 후<br>비밀번호 설정</div>
+        </div>
+        <div class="gate-arr">›</div>
+      </div>
+      <button class="btn btn-ghost" onclick="goBack()">← 처음으로</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ③ 회원가입: 이메일 입력 + 인증번호 발송
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-signup">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="top-bar-title">회원가입</span>
+      <div class="top-logo">동화</div>
+    </div>
+    <div class="form-body">
+      <div class="form-icon">📧</div>
+      <h2 class="form-title">이메일 인증</h2>
+      <p class="form-sub">
+        동화약품 임직원 이메일 아이디를 입력하세요.<br>
+        인증번호가 발송됩니다.<br>
+        <strong style="color:var(--red)">@dong-wha.co.kr</strong> 도메인만 허용됩니다.
+      </p>
+
+      <div class="inp-wrap">
+        <label class="lbl">이메일 아이디</label>
+        <div class="inp-domain-wrap" id="signup-email-wrap">
+          <input class="inp" id="signup-id" type="text" placeholder="jinwoo.lee" autocomplete="off"
+            oninput="validateSignupId()" />
+          <span class="domain-badge">@dong-wha.co.kr</span>
+        </div>
+        <div class="inp-hint" id="signup-id-hint"></div>
+      </div>
+
+      <div class="alert err" id="signup-err"></div>
+      <div class="alert ok"  id="signup-ok"></div>
+
+      <button class="btn btn-primary" id="signup-send-btn" onclick="sendSignupCode()" disabled>
+        인증번호 발송하기
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ④ 인증번호 확인
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-verify">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="top-bar-title">인증번호 확인</span>
+      <div class="top-logo">동화</div>
+    </div>
+    <div class="form-body">
+      <div class="form-icon">✉️</div>
+      <h2 class="form-title">인증번호를<br>입력해 주세요</h2>
+      <p class="form-sub">아래 이메일로 6자리 인증번호를 발송했습니다.</p>
+
+      <div class="verify-email-display">📧 <span id="verify-email-disp"></span></div>
+
+      <div class="inp-wrap">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <label class="lbl" style="margin:0">인증번호 6자리</label>
+          <span class="timer-badge" id="verify-timer">10:00</span>
+        </div>
+        <div class="code-row" id="code-row">
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="alert err" id="verify-err"></div>
+      <div class="alert ok"  id="verify-ok"></div>
+
+      <button class="btn btn-primary" id="verify-btn" onclick="checkCode()">인증 확인</button>
+
+      <div class="divider"><span>인증번호를 못 받으셨나요?</span></div>
+      <button class="txt-btn" onclick="resendCode()" id="resend-btn">인증번호 재발송</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ⑤ 비밀번호 설정 (최초 회원가입 완료)
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-setpw">
+    <div class="top-bar">
+      <span style="width:36px"></span>
+      <span class="top-bar-title">비밀번호 설정</span>
+      <div class="top-logo">동화</div>
+    </div>
+    <div class="form-body">
+      <div class="form-icon">🔐</div>
+      <h2 class="form-title">비밀번호를<br>설정해 주세요</h2>
+      <p class="form-sub">이후 로그인 시 사용할 비밀번호입니다.<br>8자리 이상, 영문+숫자 조합을 권장합니다.</p>
+
+      <div class="inp-wrap">
+        <label class="lbl">비밀번호</label>
+        <input class="inp" id="pw1" type="password" placeholder="비밀번호 입력 (8자 이상)" oninput="checkPwMatch()" />
+      </div>
+      <div class="inp-wrap">
+        <label class="lbl">비밀번호 확인</label>
+        <input class="inp" id="pw2" type="password" placeholder="동일한 비밀번호 재입력" oninput="checkPwMatch()" />
+        <div class="inp-hint" id="pw-match-hint"></div>
+      </div>
+
+      <div class="alert err" id="setpw-err"></div>
+
+      <button class="btn btn-primary" id="setpw-btn" onclick="registerUser()" disabled>
+        가입 완료 및 로그인
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ⑥ 로그인
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-login">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="top-bar-title">임직원 로그인</span>
+      <div class="top-logo">동화</div>
+    </div>
+    <div class="form-body">
+      <div class="form-icon">🔑</div>
+      <h2 class="form-title">로그인</h2>
+      <p class="form-sub">동화약품 임직원 계정으로<br>로그인해 주세요.</p>
+
+      <div class="inp-wrap">
+        <label class="lbl">이메일 아이디</label>
+        <div class="inp-domain-wrap">
+          <input class="inp" id="login-id" type="text" placeholder="jinwoo.lee" autocomplete="username" />
+          <span class="domain-badge">@dong-wha.co.kr</span>
+        </div>
+      </div>
+      <div class="inp-wrap">
+        <label class="lbl">비밀번호</label>
+        <input class="inp" id="login-pw" type="password" placeholder="비밀번호 입력" autocomplete="current-password" />
+      </div>
+
+      <div class="alert err" id="login-err"></div>
+
+      <button class="btn btn-primary" onclick="doLogin()">로그인</button>
+
+      <div class="divider"><span>계정이 없으신가요?</span></div>
+      <button class="btn btn-outline" onclick="goTo('screen-signup')">회원가입하기</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ⑦ 6개월 재인증 안내
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-reverify">
+    <div class="top-bar">
+      <span style="width:36px"></span>
+      <span class="top-bar-title">보안 재인증</span>
+      <div class="top-logo">동화</div>
+    </div>
+    <div class="form-body">
+      <div class="form-icon">🛡️</div>
+      <h2 class="form-title">6개월 주기<br>보안 인증</h2>
+
+      <div class="reverify-banner">
+        <span>⚠️</span>
+        <p>마지막 이메일 인증으로부터 <strong>6개월이 경과</strong>했습니다.<br>
+        보안 정책에 따라 재인증이 필요합니다.<br>
+        등록된 이메일로 인증번호를 발송합니다.</p>
+      </div>
+
+      <div class="verify-email-display">📧 <span id="reverify-email-disp"></span></div>
+
+      <div class="alert err" id="reverify-err"></div>
+      <div class="alert info" id="reverify-info"></div>
+
+      <button class="btn btn-primary" onclick="sendReverifyCode()">인증번호 발송</button>
+      <button class="btn btn-ghost" onclick="doLogoutFull()">나중에 하기 (로그아웃)</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ⑧ 재인증 코드 입력
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-reverify-code">
+    <div class="top-bar">
+      <span style="width:36px"></span>
+      <span class="top-bar-title">재인증 코드 입력</span>
+      <div class="top-logo">동화</div>
+    </div>
+    <div class="form-body">
+      <div class="form-icon">🔐</div>
+      <h2 class="form-title">인증번호를<br>입력해 주세요</h2>
+      <p class="form-sub">이메일로 발송된 6자리 인증번호를<br>입력해 주세요.</p>
+
+      <div class="inp-wrap">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <label class="lbl" style="margin:0">인증번호 6자리</label>
+          <span class="timer-badge" id="reverify-timer">10:00</span>
+        </div>
+        <div class="code-row" id="rcode-row">
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+          <input class="code-inp" maxlength="1" type="tel" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="alert err" id="rcode-err"></div>
+      <div class="alert ok"  id="rcode-ok"></div>
+
+      <button class="btn btn-primary" onclick="checkReverifyCode()">재인증 완료</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ⑨ 임직원 대시보드
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-employee">
+    <div class="emp-hero">
+      <div class="emp-welcome">임직원 전용 페이지</div>
+      <div class="emp-name" id="emp-name-display">환영합니다 👋</div>
+      <div class="emp-meta">
+        <span class="emp-tag">동화약품 임직원</span>
+        <span class="emp-verified-tag" id="emp-verified-date"></span>
+      </div>
+    </div>
+    <div class="emp-body">
+      <div class="sec-lbl">빠른 메뉴</div>
+      <div class="emp-grid">
+        <div class="emp-card" onclick="alert('사내 공지사항 (준비 중)')">
+          <div class="emp-card-icon">📋</div>
+          <div class="emp-card-title">사내 공지</div>
+          <div class="emp-card-desc">최신 공지 확인</div>
+        </div>
+        <div class="emp-card" onclick="alert('구내식당 메뉴 (준비 중)')">
+          <div class="emp-card-icon">🍱</div>
+          <div class="emp-card-title">구내식당</div>
+          <div class="emp-card-desc">오늘의 메뉴</div>
+        </div>
+        <div class="emp-card" onclick="alert('회의실 예약 (준비 중)')">
+          <div class="emp-card-icon">🏛️</div>
+          <div class="emp-card-title">회의실 예약</div>
+          <div class="emp-card-desc">보당홀 포함</div>
+        </div>
+        <div class="emp-card" onclick="alert('사내 전화번호부 (준비 중)')">
+          <div class="emp-card-icon">📞</div>
+          <div class="emp-card-title">사내 전화</div>
+          <div class="emp-card-desc">부서 연락처</div>
+        </div>
+      </div>
+      <div class="sec-lbl">최근 공지사항</div>
+      <div class="notice-list">
+        <div class="notice-item"><div class="n-dot"></div><div><div class="n-text">2025년 하계 휴가 일정 안내 — 7월 28일(월) ~ 8월 1일(금)</div><div class="n-date">2025.06.20</div></div></div>
+        <div class="notice-item"><div class="n-dot"></div><div><div class="n-text">보안 정책 업데이트 안내 — 하반기 보안교육 필수 이수</div><div class="n-date">2025.06.15</div></div></div>
+        <div class="notice-item"><div class="n-dot"></div><div><div class="n-text">3층 보당홀 냉방 설비 점검 — 6월 25일(수) 오전 사용 불가</div><div class="n-date">2025.06.10</div></div></div>
+      </div>
+      <button class="logout-btn" onclick="doLogoutFull()">🔓 로그아웃</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       ⑩ 외부 방문자 메뉴
+  ══════════════════════════════ -->
+  <div class="screen" id="screen-visitor">
+    <div class="vis-hero">
+      <div class="vis-hero-tag">External Visitor</div>
+      <h2 class="vis-hero-title">방문자 안내</h2>
+      <p class="vis-hero-sub">동화약품 방문에 필요한 정보를<br>확인하실 수 있습니다.</p>
+    </div>
+    <div class="vis-menu">
+      <button class="vis-item" onclick="goTo('screen-parking')">
+        <div class="vis-icon vi-p">🚗</div>
+        <div class="vis-txt"><div class="vis-title">주차 안내</div><div class="vis-desc">방문자 주차 위치 및 이용 방법</div></div>
+        <div class="vis-arr">›</div>
+      </button>
+      <button class="vis-item" onclick="goTo('screen-visit')">
+        <div class="vis-icon vi-v">🪪</div>
+        <div class="vis-txt"><div class="vis-title">방문 안내</div><div class="vis-desc">방문증 발급 및 출입 절차</div></div>
+        <div class="vis-arr">›</div>
+      </button>
+      <button class="vis-item" onclick="goTo('screen-hall')">
+        <div class="vis-icon vi-h">🏛️</div>
+        <div class="vis-txt"><div class="vis-title">3층 보당홀 입장 안내</div><div class="vis-desc">행사장 위치 및 입장 방법</div></div>
+        <div class="vis-arr">›</div>
+      </button>
+    </div>
+    <div style="padding:0 20px 32px; text-align:center;">
+      <button class="txt-btn" onclick="goBack()">← 처음으로 돌아가기</button>
+    </div>
+  </div>
+
+  <!-- ⑪ 주차 안내 -->
+  <div class="screen info-page" id="screen-parking">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span class="top-bar-title">주차 안내</span><div class="top-logo">동화</div>
+    </div>
+    <div class="info-hero">
+      <div class="info-hero-icon">🚗</div>
+      <h2 class="info-hero-title">방문자 주차 안내</h2>
+      <p class="info-hero-sub">동화약품 본사 방문자 주차장<br>이용 방법을 안내해 드립니다.</p>
+    </div>
+    <div class="info-body">
+      <div class="info-map"><span>🗺️</span><p>주차장 약도 이미지 (관리자 설정)</p></div>
+      <div class="info-card"><div class="info-card-title">📍 주차장 위치</div><div class="info-card-body">서울특별시 동대문구 천호대로 64<br><strong>본관 건물 지하 1~2층</strong><br>정문 진입 후 지하 주차장 이용</div></div>
+      <div class="info-card"><div class="info-card-title">⏱️ 방문자 주차 요금</div><div class="info-card-body">최초 <strong>1시간 무료</strong><br>이후 10분당 500원<br>방문 목적 확인 후 무료 연장 가능</div></div>
+      <div class="hl-box"><p>🔔 <strong>주의사항</strong><br>방문자 주차는 당일에 한해 인정됩니다.<br>문의: 안내데스크 ☎ 02-2021-6000</p></div>
+      <div class="tag-row"><span class="tag">🏢 지하 1~2층</span><span class="tag">🅿️ 방문자 전용</span><span class="tag">📞 02-2021-6000</span></div>
+    </div>
+  </div>
+
+  <!-- ⑫ 방문 안내 -->
+  <div class="screen info-page" id="screen-visit">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span class="top-bar-title">방문 안내</span><div class="top-logo">동화</div>
+    </div>
+    <div class="info-hero">
+      <div class="info-hero-icon">🪪</div>
+      <h2 class="info-hero-title">방문증 발급 및<br>출입 절차 안내</h2>
+      <p class="info-hero-sub">원활한 방문을 위해<br>아래 절차를 확인해 주세요.</p>
+    </div>
+    <div class="info-body">
+      <div class="sec-lbl" style="margin-bottom:18px;">방문 절차</div>
+      <div class="step"><div class="step-n">1</div><div class="step-t"><strong>1층 안내데스크 방문</strong><br>정문 입구 우측 안내데스크에서 방문 등록 진행</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t"><strong>신분증 확인 및 방문증 발급</strong><br>신분증(주민등록증/운전면허증)을 제시하고 방문증 수령</div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-t"><strong>방문 목적지 이동</strong><br>방문증을 패용하고 담당자 안내에 따라 이동</div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-t"><strong>방문증 반납</strong><br>방문 완료 후 1층 안내데스크에 반납</div></div>
+      <div class="hl-box" style="margin-top:18px;"><p>📋 <strong>사전 예약 방문</strong><br>담당자에게 사전에 방문자 성함 등록 요청 시<br>신속하게 방문증 발급 가능합니다.</p></div>
+      <div class="info-card"><div class="info-card-title">📞 안내데스크</div><div class="info-card-body">전화: <strong>02-2021-6000</strong> (내선 0)<br>운영: 평일 09:00 ~ 18:00</div></div>
+    </div>
+  </div>
+
+  <!-- ⑬ 보당홀 안내 -->
+  <div class="screen info-page" id="screen-hall">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goBack()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span class="top-bar-title">3층 보당홀</span><div class="top-logo">동화</div>
+    </div>
+    <div class="info-hero">
+      <div class="info-hero-icon">🏛️</div>
+      <h2 class="info-hero-title">3층 보당홀<br>입장 안내</h2>
+      <p class="info-hero-sub">동화약품 보당홀 행사·세미나<br>입장 방법을 안내합니다.</p>
+    </div>
+    <div class="info-body">
+      <div class="info-card"><div class="info-card-title">📍 위치</div><div class="info-card-body">본관 3층 — 엘리베이터(1층 로비 우측) 탑승 후 3층 하차<br><strong>보당홀은 3층 출구 정면에 위치</strong></div></div>
+      <div class="sec-lbl" style="margin:16px 0 14px;">입장 절차</div>
+      <div class="step"><div class="step-n">1</div><div class="step-t"><strong>1층 안내데스크에서 방문증 발급</strong><br>보당홀 행사 참석 목적 안내 후 방문증 수령</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t"><strong>3층 이동</strong><br>엘리베이터 탑승 → 3층 하차 → 정면 보당홀</div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-t"><strong>입장 확인</strong><br>보당홀 입구에서 초청장 또는 등록 명단 확인 후 입장</div></div>
+      <div class="hl-box"><p>🎤 <strong>보당홀 시설</strong><br>수용 인원: 약 150명<br>빔프로젝터, 마이크, 동시통역 설비 구비<br>음식 반입은 주최 측 허가 필요</p></div>
+      <div class="tag-row"><span class="tag">🏢 본관 3층</span><span class="tag">👥 150석 규모</span><span class="tag">🎤 세미나/행사</span></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════
+   🔧 백엔드 (회원가입 / 로그인 / 인증메일)
+   추후 Supabase 로 연동 예정
+═══════════════════════════════════════ */
+
+// 인증 도메인
+const ALLOWED_DOMAIN = "@dong-wha.co.kr";
+// 재인증 주기 (ms) — 6개월
+const REVERIFY_MS = 6 * 30 * 24 * 60 * 60 * 1000;
+
+/* ─── State ─── */
+let _pendingEmail = "";   // 인증 중인 이메일 (full)
+let _pendingCode  = "";   // 발송한 인증번호
+let _codeExpiry   = 0;    // 인증번호 만료 timestamp
+let _timerInterval = null;
+let _currentUser = null;  // 로그인 사용자
+
+/* ─── Navigation ─── */
+const _history = [];
+function goTo(id) {
+  const cur = document.querySelector('.screen.active');
+  if (cur) {
+    cur.classList.remove('active');
+    cur.classList.add('exiting');
+    setTimeout(() => cur.classList.remove('exiting'), 300);
+    _history.push(cur.id);
+  }
+  document.getElementById(id).classList.add('active');
+  document.getElementById(id).scrollTop = 0;
+}
+function goBack() {
+  if (!_history.length) return;
+  const prevId = _history.pop();
+  const cur = document.querySelector('.screen.active');
+  if (cur) { cur.classList.remove('active'); }
+  document.getElementById(prevId).classList.add('active');
+}
+
+/* ─── Alert helpers ─── */
+function showAlert(id, msg, type='err') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = `alert ${type} show`;
+}
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+/* ─── Generate 6-digit code ─── */
+function genCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+/* ─── Send email (TODO: Supabase Edge Function 으로 교체 예정) ─── */
+async function sendEmail(toEmail, code) {
+  // 추후 Supabase 연동 후 구현
+  console.warn('sendEmail: Supabase 연동 대기 중', { toEmail, code });
+  return Promise.resolve({ status: 200, text: 'stub' });
+}
+
+/* ─── Countdown timer ─── */
+function startTimer(displayId, onExpire) {
+  clearInterval(_timerInterval);
+  let remaining = 10 * 60; // 10분
+  const el = document.getElementById(displayId);
+  function tick() {
+    const m = String(Math.floor(remaining / 60)).padStart(2,'0');
+    const s = String(remaining % 60).padStart(2,'0');
+    el.textContent = `${m}:${s}`;
+    el.className = remaining <= 60 ? 'timer-badge urgent' : 'timer-badge';
+    if (remaining-- <= 0) { clearInterval(_timerInterval); if (onExpire) onExpire(); }
+  }
+  tick();
+  _timerInterval = setInterval(tick, 1000);
+}
+
+/* ─── Code input auto-advance ─── */
+function setupCodeInputs(rowId) {
+  const inputs = document.querySelectorAll(`#${rowId} .code-inp`);
+  inputs.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/\D/g,'');
+      if (inp.value && i < inputs.length - 1) inputs[i+1].focus();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i-1].focus();
+    });
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'');
+      [...txt].slice(0,6).forEach((ch, j) => { if(inputs[i+j]) inputs[i+j].value = ch; });
+      const lastIdx = Math.min(i + txt.length - 1, 5);
+      inputs[lastIdx].focus();
+    });
+  });
+}
+setupCodeInputs('code-row');
+setupCodeInputs('rcode-row');
+
+/* ─── Get code from row ─── */
+function getCodeFromRow(rowId) {
+  return [...document.querySelectorAll(`#${rowId} .code-inp`)].map(i=>i.value).join('');
+}
+function clearCodeRow(rowId) {
+  document.querySelectorAll(`#${rowId} .code-inp`).forEach(i=>i.value='');
+  document.querySelector(`#${rowId} .code-inp`).focus();
+}
+
+/* ══════════════════════════════
+   SIGN UP: 이메일 검증
+══════════════════════════════ */
+function validateSignupId() {
+  const val = document.getElementById('signup-id').value.trim();
+  const hint = document.getElementById('signup-id-hint');
+  const btn  = document.getElementById('signup-send-btn');
+  if (!val) { hint.textContent=''; hint.className='inp-hint'; btn.disabled=true; return; }
+  // 영문, 숫자, 점, 하이픈 허용
+  const valid = /^[a-zA-Z0-9._-]+$/.test(val);
+  if (!valid) {
+    hint.textContent = '영문, 숫자, 점(.), 하이픈(-)만 입력 가능합니다';
+    hint.className = 'inp-hint err'; btn.disabled=true;
+  } else {
+    hint.textContent = `✓ ${val}${ALLOWED_DOMAIN} 으로 인증번호를 발송합니다`;
+    hint.className = 'inp-hint ok'; btn.disabled=false;
+  }
+}
+
+/* ══════════════════════════════
+   SIGN UP: 인증번호 발송
+══════════════════════════════ */
+async function sendSignupCode() {
+  const id  = document.getElementById('signup-id').value.trim();
+  const btn = document.getElementById('signup-send-btn');
+  if (!id) return;
+
+  _pendingEmail = id + ALLOWED_DOMAIN;
+  _pendingCode  = genCode();
+  _codeExpiry   = Date.now() + 10 * 60 * 1000;
+
+  btn.disabled = true;
+  btn.textContent = '발송 중...';
+  hideAlert('signup-err'); hideAlert('signup-ok');
+
+  try {
+    await sendEmail(_pendingEmail, _pendingCode);
+    showAlert('signup-ok', `✓ ${_pendingEmail} 으로 인증번호를 발송했습니다.`, 'ok');
+    // 화면 전환
+    document.getElementById('verify-email-disp').textContent = _pendingEmail;
+    clearCodeRow('code-row');
+    hideAlert('verify-err'); hideAlert('verify-ok');
+    startTimer('verify-timer', () => showAlert('verify-err','인증번호가 만료되었습니다. 재발송해 주세요.'));
+    goTo('screen-verify');
+  } catch(e) {
+    console.error(e);
+    showAlert('signup-err', '이메일 발송에 실패했습니다. EmailJS 설정을 확인해 주세요.');
+    btn.disabled = false;
+    btn.textContent = '인증번호 발송하기';
+  }
+}
+
+/* ══════════════════════════════
+   VERIFY: 인증번호 확인
+══════════════════════════════ */
+async function checkCode() {
+  const entered = getCodeFromRow('code-row');
+  if (entered.length < 6) { showAlert('verify-err','6자리를 모두 입력해 주세요.'); return; }
+  if (Date.now() > _codeExpiry) { showAlert('verify-err','인증번호가 만료되었습니다. 재발송해 주세요.'); return; }
+  if (entered !== _pendingCode)  { showAlert('verify-err','인증번호가 올바르지 않습니다.'); clearCodeRow('code-row'); return; }
+
+  clearInterval(_timerInterval);
+  showAlert('verify-ok','✓ 인증 완료! 비밀번호를 설정해 주세요.','ok');
+  document.getElementById('pw1').value = '';
+  document.getElementById('pw2').value = '';
+  document.getElementById('pw-match-hint').textContent = '';
+  document.getElementById('setpw-btn').disabled = true;
+  hideAlert('setpw-err');
+  setTimeout(() => goTo('screen-setpw'), 800);
+}
+
+async function resendCode() {
+  _pendingCode = genCode();
+  _codeExpiry  = Date.now() + 10 * 60 * 1000;
+  hideAlert('verify-err');
+  document.getElementById('resend-btn').disabled = true;
+  try {
+    await sendEmail(_pendingEmail, _pendingCode);
+    showAlert('verify-ok', `✓ 인증번호를 재발송했습니다.`, 'ok');
+    clearCodeRow('code-row');
+    startTimer('verify-timer', () => showAlert('verify-err','인증번호가 만료되었습니다. 재발송해 주세요.'));
+  } catch(e) {
+    showAlert('verify-err','재발송에 실패했습니다.');
+  } finally {
+    document.getElementById('resend-btn').disabled = false;
+  }
+}
+
+/* ══════════════════════════════
+   SET PASSWORD: 비밀번호 검증
+══════════════════════════════ */
+function checkPwMatch() {
+  const pw1 = document.getElementById('pw1').value;
+  const pw2 = document.getElementById('pw2').value;
+  const hint = document.getElementById('pw-match-hint');
+  const btn  = document.getElementById('setpw-btn');
+  if (!pw2) { hint.textContent=''; btn.disabled=true; return; }
+  if (pw1.length < 8) { hint.textContent='비밀번호는 8자 이상이어야 합니다'; hint.className='inp-hint err'; btn.disabled=true; return; }
+  if (pw1 !== pw2)    { hint.textContent='비밀번호가 일치하지 않습니다'; hint.className='inp-hint err'; btn.disabled=true; return; }
+  hint.textContent = '✓ 비밀번호가 일치합니다'; hint.className='inp-hint ok'; btn.disabled=false;
+}
+
+/* ══════════════════════════════
+   REGISTER: Firebase Auth + Firestore
+══════════════════════════════ */
+async function registerUser() {
+  const pw  = document.getElementById('pw1').value;
+  const btn = document.getElementById('setpw-btn');
+  btn.disabled = true; btn.textContent = '가입 처리 중...';
+  hideAlert('setpw-err');
+
+  try {
+    // 1. Firebase Auth 계정 생성
+    const { createUserWithEmailAndPassword, doc, setDoc, serverTimestamp } = window.$fb;
+    const cred = await createUserWithEmailAndPassword(window.$auth, _pendingEmail, pw);
+    _currentUser = cred.user;
+
+    // 2. Firestore에 사용자 메타 저장
+    const now = new Date();
+    await setDoc(doc(window.$db, 'employees', cred.user.uid), {
+      email:           _pendingEmail,
+      createdAt:       serverTimestamp(),
+      lastVerifiedAt:  serverTimestamp(),
+      verifiedCount:   1
+    });
+
+    // 3. 대시보드로 이동
+    enterDashboard(_pendingEmail, now);
+  } catch(e) {
+    console.error(e);
+    let msg = '가입 처리 중 오류가 발생했습니다.';
+    if (e.code === 'auth/email-already-in-use') msg = '이미 가입된 계정입니다. 로그인 화면을 이용해 주세요.';
+    if (e.code === 'auth/weak-password')        msg = '비밀번호가 너무 짧습니다. 6자 이상 입력해 주세요.';
+    showAlert('setpw-err', msg);
+    btn.disabled = false; btn.textContent = '가입 완료 및 로그인';
+  }
+}
+
+/* ══════════════════════════════
+   LOGIN
+══════════════════════════════ */
+async function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  if (!id || !pw) { showAlert('login-err','이메일 아이디와 비밀번호를 입력해 주세요.'); return; }
+
+  const fullEmail = id + ALLOWED_DOMAIN;
+  hideAlert('login-err');
+
+  try {
+    const { signInWithEmailAndPassword, doc, getDoc } = window.$fb;
+    const cred = await signInWithEmailAndPassword(window.$auth, fullEmail, pw);
+    _currentUser = cred.user;
+
+    // Firestore에서 마지막 인증일 확인
+    const snap = await getDoc(doc(window.$db, 'employees', cred.user.uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      const lastVerified = data.lastVerifiedAt?.toDate?.() || new Date(0);
+      const elapsed = Date.now() - lastVerified.getTime();
+
+      if (elapsed > REVERIFY_MS) {
+        // 6개월 초과 → 재인증 필요
+        document.getElementById('reverify-email-disp').textContent = fullEmail;
+        hideAlert('reverify-err'); hideAlert('reverify-info');
+        goTo('screen-reverify');
+      } else {
+        enterDashboard(fullEmail, lastVerified);
+      }
+    } else {
+      // Firestore 문서 없음 (예외 케이스)
+      enterDashboard(fullEmail, new Date());
+    }
+  } catch(e) {
+    console.error(e);
+    let msg = '로그인에 실패했습니다.';
+    if (e.code === 'auth/user-not-found'  ||
+        e.code === 'auth/wrong-password'  ||
+        e.code === 'auth/invalid-credential') msg = '이메일 또는 비밀번호가 올바르지 않습니다.';
+    if (e.code === 'auth/too-many-requests')  msg = '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+    showAlert('login-err', msg);
+  }
+}
+
+/* ══════════════════════════════
+   RE-VERIFY: 재인증 코드 발송
+══════════════════════════════ */
+async function sendReverifyCode() {
+  if (!_currentUser) return;
+  _pendingCode = genCode();
+  _codeExpiry  = Date.now() + 10 * 60 * 1000;
+  hideAlert('reverify-err');
+  const email = _currentUser.email;
+
+  try {
+    await sendEmail(email, _pendingCode);
+    showAlert('reverify-info', `✓ ${email} 으로 인증번호를 발송했습니다.`, 'info');
+    clearCodeRow('rcode-row');
+    hideAlert('rcode-err'); hideAlert('rcode-ok');
+    startTimer('reverify-timer', () => showAlert('rcode-err','인증번호가 만료되었습니다.'));
+    setTimeout(() => goTo('screen-reverify-code'), 800);
+  } catch(e) {
+    showAlert('reverify-err','이메일 발송에 실패했습니다. 관리자에게 문의해 주세요.');
+  }
+}
+
+async function checkReverifyCode() {
+  const entered = getCodeFromRow('rcode-row');
+  if (entered.length < 6) { showAlert('rcode-err','6자리를 모두 입력해 주세요.'); return; }
+  if (Date.now() > _codeExpiry) { showAlert('rcode-err','만료된 인증번호입니다. 다시 발송해 주세요.'); return; }
+  if (entered !== _pendingCode)  { showAlert('rcode-err','인증번호가 올바르지 않습니다.'); clearCodeRow('rcode-row'); return; }
+
+  clearInterval(_timerInterval);
+  showAlert('rcode-ok','✓ 재인증 완료!','ok');
+
+  try {
+    // Firestore lastVerifiedAt 갱신
+    const { doc, updateDoc, serverTimestamp } = window.$fb;
+    await updateDoc(doc(window.$db, 'employees', _currentUser.uid), {
+      lastVerifiedAt: serverTimestamp(),
+      verifiedCount: (await (async ()=>{
+        const { getDoc } = window.$fb;
+        const s = await getDoc(doc(window.$db,'employees',_currentUser.uid));
+        return (s.data()?.verifiedCount || 0) + 1;
+      })())
+    });
+  } catch(e) { console.warn('Firestore 업데이트 실패', e); }
+
+  setTimeout(() => enterDashboard(_currentUser.email, new Date()), 700);
+}
+
+/* ══════════════════════════════
+   ENTER DASHBOARD
+══════════════════════════════ */
+function enterDashboard(email, lastVerifiedAt) {
+  const id = email.replace(ALLOWED_DOMAIN,'');
+  document.getElementById('emp-name-display').textContent = `${id} 님, 환영합니다 👋`;
+  const dateStr = lastVerifiedAt instanceof Date
+    ? `${lastVerifiedAt.getFullYear()}.${String(lastVerifiedAt.getMonth()+1).padStart(2,'0')}.${String(lastVerifiedAt.getDate()).padStart(2,'0')} 인증`
+    : '인증 완료';
+  document.getElementById('emp-verified-date').textContent = `🛡️ ${dateStr}`;
+  // 히스토리 초기화 후 대시보드로
+  _history.length = 0;
+  const cur = document.querySelector('.screen.active');
+  if (cur) cur.classList.remove('active');
+  document.getElementById('screen-employee').classList.add('active');
+}
+
+/* ══════════════════════════════
+   LOGOUT
+══════════════════════════════ */
+async function doLogoutFull() {
+  const { signOut } = window.$fb;
+  try { await signOut(window.$auth); } catch(e) {}
+  _currentUser = null; _pendingEmail = ''; _pendingCode = '';
+  clearInterval(_timerInterval);
+  // 입력 초기화
+  ['signup-id','login-id','login-pw','pw1','pw2'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  _history.length = 0;
+  const cur = document.querySelector('.screen.active');
+  if (cur) cur.classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+}
+
+/* ══════════════════════════════
+   페이지 로드 핸들러
+   (자동 로그인 감지는 추후 Supabase 연동 시 추가)
+══════════════════════════════ */
+window.addEventListener('load', async () => {
+  // Splash 제거
+  setTimeout(() => {
+    const sp = document.getElementById('splash');
+    sp.style.opacity = '0';
+    setTimeout(() => sp.remove(), 500);
+  }, 1400);
+
+  // PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    const sw = `const C='dw-v2';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./']))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'})));
+  }
+});
+</script>
+</body>
+</html>
